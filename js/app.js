@@ -19,7 +19,7 @@ $(document).ready(function(){
     DHList("list-group","",["list-group-item trans","list-group-item active","list-group-item trans"],["Prvi2","Drugi2","Treci2"],"",[]).appendTo("#third");
     //getData();
     DHElement("button","btn btn-primary","btngd",'GET DATA',["onclick:getData()"]).appendTo("#fifth");     
-    DHEmptyElement("input","","url_input","https://jsonplaceholder.typicode.com/posts/","text",[],"position:absolute;width:450px;").appendTo("#fifth");
+    DHEmptyElement("input","","url_input","https://jsonplaceholder.typicode.com/users/","text",[],"position:absolute;width:450px;").appendTo("#fifth");
     console.log(DHTable("", "", [], [["Marko","Jereminov","PP@example.com"],["Pavle","Jovanovic","pj@example.com"],["Jovan","Djokovic","dj@example.com"]]).bodyRows);
     
 });

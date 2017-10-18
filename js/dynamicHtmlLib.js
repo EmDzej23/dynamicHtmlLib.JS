@@ -15,11 +15,11 @@
 //Parent Component class where are the basic component's 
 //attributes and values are initiated.
 var AbstractDHElement = function (classes, id, value, optionalAttributes, styles) {
-    this.classes = classes===''||classes.includes("class=")?classes:" class='"+classes+"'";
-    this.id = id===''||id.toString().includes("id=")?id:" id='"+id+"'";
+    this.classes = classes===''||classes.indexOf("class=")>=0?classes:" class='"+classes+"'";
+    this.id = id===''||id.toString().indexOf("id=")>=0?id:" id='"+id+"'";
     this.value = value;
     this.optionalAttributes = optionalAttributes;
-    this.styles = styles===undefined || styles===''||styles.includes("style=")?styles:" style='"+styles+"'";;
+    this.styles = styles===undefined || styles===''||styles.indexOf("style=")>=0?styles:" style='"+styles+"'";;
     if (styles===undefined) this.styles = '';
     //Returns a string of optional attributes, ex. "min='0.0' max='50.0' contenteditable='true'"
     this.getAttributesString = function() {
@@ -160,7 +160,14 @@ function DHTable(classes, id, titles, rows, json, styles) {
         var rows = [];
         if (this.json===undefined) return [];
         for (var i = 0;i<this.json.length;i++) {
-            rows.push(Object.values(this.json[i]));        
+            var p = this.json[i];
+            rows.push(Object.keys(this.json[i]).map(function(e){
+                if (p[e]!==null && p[e].toString()==="[object Object]") {
+                   var cell_id = (Math.random()*Math.random()).toString().replace(".","");
+                   return DHElement("button","btn btn-primary btn-sm","","+",["onclick:collapseTable(\"#inner_table"+cell_id+"\")"]).html + DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],[p[e]]).html;
+                }
+                else return p[e];
+            }));        
         }
         return rows;
     };
@@ -202,7 +209,7 @@ function DHTable(classes, id, titles, rows, json, styles) {
         for (var i = 0;i<this.rows.length;i++) {
             tableBodyOneRowString="";            
             for (var j = 0;j<this.rows[i].length;j++) {
-                var cell = this.rows[i][j].toString().includes("<td")?this.rows[i][j].toString():DHElement("td","","",this.rows[i][j]).html;
+                var cell = this.rows[i][j]!==null&&this.rows[i][j].toString().indexOf("<td")>=0?this.rows[i][j].toString():DHElement("td","","",this.rows[i][j]).html;
                 tableBodyOneRowString += cell;  
             }
             tableBodyRowsString += DHElement("tr","","",tableBodyOneRowString).html;
@@ -230,7 +237,7 @@ function DHTable(classes, id, titles, rows, json, styles) {
         AbstractDHElement.prototype.appendData.call(this,container+" thead", this.headerRow);
     };
     this.appendTo = function(container) {
-        //AbstractDHElement.prototype.removeChildrenData.call(this, container);        
+        AbstractDHElement.prototype.removeChildrenData.call(this, container);        
         AbstractDHElement.prototype.appendData.call(this,container, this.getComponent());
     };
     return this;
@@ -244,7 +251,7 @@ function DHEmptyElement(tag, classes, id, value, type, optionalAttributes, style
     this.tag = tag;    
     this.type = type;
     this.getComponent = function() {
-        return "<"+tag+this.classes+this.id+" value='"+this.value+"' type='"+this.type+"'"+this.styles+this.getAttributesString()+">";
+        return "<"+tag+this.classes+this.id+" value='"+this.value+"' type='"+this.type+"'"+this.getAttributesString()+">";
     };
     this.html = this.getComponent();
     this.appendTo = function(container) {
@@ -253,4 +260,9 @@ function DHEmptyElement(tag, classes, id, value, type, optionalAttributes, style
     return this;
 };
 
+function collapseTable(id) {
+    if ($(id).hasClass("collapse")) {
+       $(id).removeClass("collapse");     
+    } else $(id).addClass("collapse"); 
+}
 
