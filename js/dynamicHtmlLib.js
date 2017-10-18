@@ -28,7 +28,15 @@ var AbstractDHElement = function (classes, id, value, optionalAttributes, styles
         var spacing = " ";
         for (var i = 0;i<this.optionalAttributes.length;i++) {
             if (i===(this.optionalAttributes.length-1)) spacing = "";
-            attrString+=this.optionalAttributes[i].split(":")[0]+"='"+this.optionalAttributes[i].split(":")[1]+"'"+spacing;
+            var value = "";            
+            if (this.optionalAttributes[i].split(":").length>2) {
+                for (var j = 1;j< this.optionalAttributes[i].split(":").length;j++) {
+                    value += this.optionalAttributes[i].split(":")[j];
+                    if (j!==(this.optionalAttributes[i].split(":").length-1)) value+=":";                    
+                }
+            }
+            else value = this.optionalAttributes[i].split(":")[1];
+            attrString+=this.optionalAttributes[i].split(":")[0]+"='"+value+"'"+spacing;
         }
         return attrString;
     };
@@ -155,16 +163,24 @@ function DHTable(classes, id, titles, rows, json, styles) {
     }
     this.classes = classes;
     this.id = id;
-    this.json = json;
+    this.json = json!==undefined && json.length===undefined?[json]:json;
     this.getRowsFromJson = function() {
         var rows = [];
         if (this.json===undefined) return [];
         for (var i = 0;i<this.json.length;i++) {
             var p = this.json[i];
             rows.push(Object.keys(this.json[i]).map(function(e){
-                if (p[e]!==null && p[e].toString()==="[object Object]") {
-                   var cell_id = (Math.random()*Math.random()).toString().replace(".","");
-                   return DHElement("button","btn btn-primary btn-sm","","+",["onclick:collapseTable(\"#inner_table"+cell_id+"\")"]).html + DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],[p[e]]).html;
+                var cell_id = (Math.random()*Math.random()).toString().replace(".","");
+                var btn_id = "btn_"+(Math.random()*Math.random()).toString().replace(".","");
+                if (p[e]!==null && p[e] instanceof Array) {
+                    if (p[e].length===0) return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHElement("h6","collapse","inner_table"+cell_id,"No data yet",[]).html;
+                   return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],p[e]).html;
+                }
+                if (p[e]!==null && p[e] instanceof Object) {
+                   return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],[p[e]]).html;
+                }
+                if (p[e]!==null && (p[e].toString().indexOf(".jpg")>=0 || p[e].toString().indexOf(".png")>=0 || p[e].toString().indexOf(".icon")>=0)) {
+                   return DHElement("img","","","",["src:"+p[e],"width:100px","height:100px"],"border-radius: 50%; border: 5px solid blue;").html;                
                 }
                 else return p[e];
             }));        
@@ -260,9 +276,10 @@ function DHEmptyElement(tag, classes, id, value, type, optionalAttributes, style
     return this;
 };
 
-function collapseTable(id) {
-    if ($(id).hasClass("collapse")) {
-       $(id).removeClass("collapse");     
-    } else $(id).addClass("collapse"); 
+function collapseTable(cell_id, btn_id) {
+    if ($(cell_id).hasClass("collapse")) {
+       $(cell_id).removeClass("collapse");
+       $("#"+btn_id).text("-");     
+    } else {$("#"+btn_id).text("+"); $(cell_id).addClass("collapse")}; 
 }
 
