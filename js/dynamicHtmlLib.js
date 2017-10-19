@@ -157,6 +157,7 @@ function DHList(classes, id, liClasses, elements, value, optionalAttributes, sty
 };
 //Creating html string for whole table or for table body rows.
 //Data is passed as ["rb","name","email"] for titles and [["1","mj","@"]["1","mj","@"]["1","mj","@"]] for rows.
+//Data can also be passed as any json - well formatted!
 function DHTable(classes, id, titles, rows, json, styles) {
     if (!(this instanceof DHTable)){
         return new DHTable(classes, id, titles, rows, json, styles);
@@ -169,11 +170,12 @@ function DHTable(classes, id, titles, rows, json, styles) {
         if (this.json===undefined) return [];
         for (var i = 0;i<this.json.length;i++) {
             var p = this.json[i];
-            rows.push(Object.keys(this.json[i]).map(function(e){
+            rows.push(Object.keys(this.json[i]===null?"/":this.json[i]).map(function(e){
                 var cell_id = (Math.random()*Math.random()).toString().replace(".","");
                 var btn_id = "btn_"+(Math.random()*Math.random()).toString().replace(".","");
                 if (p[e]!==null && p[e] instanceof Array) {
-                    if (p[e].length===0) return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHElement("h6","collapse","inner_table"+cell_id,"No data yet",[]).html;
+                    if (p[e].length===0) return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_text"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHElement("h6","collapse","inner_text"+cell_id,"No data yet",[]).html;
+                    if (Object.prototype.toString.call(p[e][0])==="[object String]") return p[e];
                    return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:large;").html + DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],p[e]).html;
                 }
                 if (p[e]!==null && p[e] instanceof Object) {
@@ -181,6 +183,9 @@ function DHTable(classes, id, titles, rows, json, styles) {
                 }
                 if (p[e]!==null && (p[e].toString().indexOf(".jpg")>=0 || p[e].toString().indexOf(".png")>=0 || p[e].toString().indexOf(".icon")>=0)) {
                    return DHElement("img","","","",["src:"+p[e],"width:100px","height:100px"],"border-radius: 50%; border: 5px solid blue;").html;                
+                }
+                if (p[e]!==null && p[e].toString().indexOf("http")===0 && (p[e].toString().indexOf(".jpg")<0 && p[e].toString().indexOf(".png")<0 && p[e].toString().indexOf(".icon")<0)) {
+                   return DHElement("a","","",p[e],["href:"+p[e],"target:_blank"]).html;                
                 }
                 else return p[e];
             }));        
@@ -253,7 +258,7 @@ function DHTable(classes, id, titles, rows, json, styles) {
         AbstractDHElement.prototype.appendData.call(this,container+" thead", this.headerRow);
     };
     this.appendTo = function(container) {
-        AbstractDHElement.prototype.removeChildrenData.call(this, container);        
+        //AbstractDHElement.prototype.removeChildrenData.call(this, container);        
         AbstractDHElement.prototype.appendData.call(this,container, this.getComponent());
     };
     return this;
@@ -267,7 +272,7 @@ function DHEmptyElement(tag, classes, id, value, type, optionalAttributes, style
     this.tag = tag;    
     this.type = type;
     this.getComponent = function() {
-        return "<"+tag+this.classes+this.id+" value='"+this.value+"' type='"+this.type+"'"+this.getAttributesString()+">";
+        return "<"+tag+this.classes+this.id+this.styles+" value='"+this.value+"' type='"+this.type+"'"+this.getAttributesString()+">";
     };
     this.html = this.getComponent();
     this.appendTo = function(container) {
@@ -281,5 +286,20 @@ function collapseTable(cell_id, btn_id) {
        $(cell_id).removeClass("collapse");
        $("#"+btn_id).text("-");     
     } else {$("#"+btn_id).text("+"); $(cell_id).addClass("collapse")}; 
+}
+
+function MakeResponsiveDHTable(data) {
+    var table = DHTable("table table-responsive root-table","new_table",[],[],data);
+    return table.html;
+}
+function InitDataTable(id) {
+    var table = $(id).DataTable({"paging":false,"dom": '<lf<t>ip>'});
+ 
+    table.on( 'draw', function () {
+        var body = $( table.table().body() );
+ 
+        body.unhighlight();
+        body.highlight( table.search() );  
+    } );
 }
 
