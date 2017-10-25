@@ -62,6 +62,21 @@ AbstractDHElement.prototype.addCssFiles = function (files) {
 AbstractDHElement.prototype.addPageTitle = function (title) {
     AbstractDHElement.prototype.appendData("head", DHElement("title","","",title,[]).html);
 };
+
+AbstractDHElement.prototype.postData = function(options, onSuccess) {
+    var d = AbstractDHElement.prototype.ajax("POST",options.url,"json","application/json","","",options.data);
+    d.executeAjax(onSuccess);
+};
+
+AbstractDHElement.prototype.fetchData = function(options, onSuccess) {
+    var d = AbstractDHElement.prototype.ajax("GET",options.url,"json","application/json","","","");
+    d.executeAjax(onSuccess);
+};
+
+AbstractDHElement.prototype.updateTable = function(options) {
+    DHTable("","",[],options.data).refreshTableBody(options.id);
+};
+
 //Executing ajax and passing data to the passed function - 'afterDataReceived()'
 AbstractDHElement.prototype.ajax = function (type, url, dataType, contentType, onSuccess, onComplete, data) {
     this.type = type;
@@ -157,7 +172,7 @@ function DHList(classes, id, liClasses, elements, value, optionalAttributes, sty
 };
 //Creating html string for whole table or for table body rows.
 //Data is passed as ["rb","name","email"] for titles and [["1","mj","@"]["1","mj","@"]["1","mj","@"]] for rows.
-//Data can also be passed as any json - well formatted!
+//Data can also be passed as any json!
 function DHTable(classes, id, titles, rows, json, styles) {
     if (!(this instanceof DHTable)){
         return new DHTable(classes, id, titles, rows, json, styles);
@@ -179,10 +194,12 @@ function DHTable(classes, id, titles, rows, json, styles) {
                     if (Object.prototype.toString.call(p[e][0])==="[object String]") {
                         return p[e];
                     }
+                    allInnerTableIds.push("#inner_table"+cell_id);
                     return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:xx-small;").html + 
                           DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],p[e]).html;
                 }
                 if (p[e]!==null && p[e] instanceof Object) {
+                    allInnerTableIds.push("#inner_table"+cell_id);
                     return DHElement("button","btn btn-primary btn-sm",btn_id,"+",["onclick:collapseTable(\"#inner_table"+cell_id+"\",\""+btn_id+"\")"],"font-size:xx-small;").html + 
                            DHTable("inner_table table table-responsive collapse","inner_table"+cell_id,[],[],[p[e]]).html;
                 }
@@ -300,16 +317,33 @@ function DHEmptyElement(tag, classes, id, value, type, optionalAttributes, style
 function collapseTable(cell_id, btn_id) {
     if ($(cell_id).hasClass("collapse")) {
        $(cell_id).removeClass("collapse");
+       //$(cell_id+"_filter").removeClass("collapse");
+       //$(cell_id+"_info").removeClass("collapse");
        $("#"+btn_id).text("-");     
-    } else {$("#"+btn_id).text("+"); $(cell_id).addClass("collapse")}; 
+    } else {
+       $("#"+btn_id).text("+"); 
+       $(cell_id).addClass("collapse"); 
+       //$(cell_id+"_filter").addClass("collapse");
+       //$(cell_id+"_info").addClass("collapse");
+    }; 
+    refreshTable();
 }
 
 function MakeResponsiveDHTable(data) {
     var table = DHTable("table table-responsive root-table","new_table",[],[],data);
     return table.html;
 }
+var outerTable;
+var allInnerTableIds=[];
+var allInnerTables = []; 
 function InitDataTable(id) {
-    var table = $(id).DataTable({"paging":false,"dom": '<lf<t>ip>'});
+    var table = $(id).DataTable({
+        "paging":false,
+        "dom": '<lf<t>ip>',
+        "scrollY": 400,
+        "scrollX": true,
+        "scrollCollapse": true,
+    });
  
     table.on( 'draw', function () {
         var body = $( table.table().body() );
@@ -317,5 +351,193 @@ function InitDataTable(id) {
         body.unhighlight();
         body.highlight( table.search() );  
     } );
+    outerTable = table;
+    return table;
+    
+}
+function InitAllDataTables() {
+    var innerTables = [];
+    for (var i = 0;i<allInnerTableIds.length;i++) {
+        innerTables.push(InitDataTable(allInnerTableIds[i]));
+        $(allInnerTableIds[i]+"_filter").addClass("collapse");
+        $(allInnerTableIds[i]+"_info").addClass("collapse");
+    }
+    return innerTables;
+    
+}
+function refreshTable() {
+    outerTable.columns.adjust().draw();
+} 
+
+
+function DHModalForm (options) {
+    if (!(this instanceof DHModalForm)){
+        return new DHModalForm(options);
+    }
+    this.options = options;
+    this.title = options.title===undefined?"":options.title;
+    this.buttonLabel = options.buttonLabel===undefined?"":options.buttonLabel;
+    this.method = options.method===undefined?"":options.method;
+    this.createDataDynamically = function () {
+        if (Object.prototype.toString.call(this.options.data)==="[object String]") return this.options.data;
+        var htmlText="";
+        for (var i = 0;i<this.options.data.length;i++) {
+            if (this.options.data[i].type!=="select") { 
+                if (this.options.data[i].type==="textarea") {
+                    var wrapper = CreateTextAreaFormControl(this.options.data[i].type, this.options.data[i].label, this.options.data[i].id===undefined?"":this.options.data[i].id, this.options.data[i].value);
+                    htmlText+=wrapper;                
+                } 
+                else {
+                    var wrapper = CreateInputFormControl(this.options.data[i].type, this.options.data[i].label, this.options.data[i].id===undefined?"":this.options.data[i].id, this.options.data[i].value);
+                    htmlText+=wrapper;
+                }         
+            }
+            else {
+                var opts = 
+                        {
+                          items:this.options.data[i].items, 
+                          label:this.options.data[i].label,
+                          id:this.options.data[i].id
+                        };
+                htmlText+=CreateSelectElement(opts);
+            }
+        }
+        
+        return htmlText;
+    };
+    this.data = this.createDataDynamically();
+    
+    this.getComponent = function() {
+        var d = DHElement("div","modal fade","modal_large","",[],"display:none;")
+                .child(DHElement("div","modal-dialog","","")
+                .child(DHElement("div","modal-content","","")
+                .child(DHElement("div","modal-header bg-teal-400","","")
+                .child(DHElement("h2","panel-title","",this.title))
+                .child(DHElement("button","close","","x",["data-dismiss:modal"])))
+                .child(DHElement("div","modal-body","","")
+                .child(DHElement("div","row","","")
+                .child(DHElement("div","col-md-12 col-lg-12 col-sm-12 col-xs-12","","")
+                .child(DHElement("div","panel panel-flat","","",[],"max-height: 350px; overflow: auto;")
+                .child(DHElement("div","panel-body","","",[],"overflow-y: auto; max-height: 250px;")
+                .child(DHElement("div","form-group","",this.data))))))
+                .child(DHElement("div","modal-body","","")
+                .child(DHElement("div","row","","")
+                .child(DHElement("div","col-md-12 col-lg-12 col-sm-12 col-xs-12","","")
+                .child(DHElement("button","btn bg-teal-400","",this.buttonLabel,["onclick:"+this.method]))
+                .child(DHElement("button","btn btn-link","","Close",["data-dismiss:modal"]))))))));
+        var htmlText = DHElement(d.tag, d.classes, d.id, d.getComponentsTree(d), d.optionalAttributes, d.styles).html;
+        return htmlText;
+    };
+    this.html = this.getComponent();
 }
 
+function DHModalDialog (options) {
+    if (!(this instanceof DHModalDialog)){
+        return new DHModalDialog(options);
+    }
+    this.question = options.question;
+    this.getComponent = function() {
+        var d = DHElement("div","modal fade","dialog","",[],"display:none;")
+                .child(DHElement("div","modal-dialog","","")
+                .child(DHElement("div","modal-content","","")
+                .child(DHElement("div","modal-body","","")
+                .child(DHElement("button","bootbox-close-button close","","x",["type:button","data-dismiss:modal","aria-hidden:true"],"margin-top: -10px;"))
+                .child(DHElement("div","bootbox-body","",this.question)))
+                .child(DHElement("div","modal-footer","","")
+                .child(DHElement("button","btn btn-default","noBtn","Ne",["data-bb-handler:cancel"]))
+                .child(DHElement("button","btn btn-primary","yesBtn","Yes",["data-bb-handler:confirm"])))));
+        var htmlText = DHElement(d.tag, d.classes, d.id, d.getComponentsTree(d), 
+        d.optionalAttributes, d.styles).html;        
+        return htmlText;
+    };
+    this.html = this.getComponent();
+}
+
+function CreateTableBtn(method, type) {
+    var t = type==="edit"?"list":"remove";
+    return DHElement("button","btn btn-rounded","",
+    DHElement("i","glyphicon glyphicon-"+t,"","",["aria-hidden:true"]).html,
+    ["type:button","name:action","onclick:"+method]).html;
+}
+
+function CreateSelectElement(options) {
+    var optionsData = "";
+    for (var i = 0;i<options.items.length;i++) {
+        optionsData+=DHElement("option","","",options.items[i].name,["value:"+options.items[i].id]).html;
+    }
+    var cOptionsSelectElem = DHElement("select","form-control",options.id,optionsData,["name:select"]);
+    var cOptionsFormLabel = DHElement("label","control-label col-md-2","",options.label);
+    var cOptionsSelectDiv = DHElement("div","col-md-10","",cOptionsSelectElem.html);
+    return DHElement("div","form-group col-md-12","",cOptionsFormLabel.html+cOptionsSelectDiv.html).html;
+}
+
+function CreateInputFormControl(type, labelText, id, value) {
+    var input = DHEmptyElement("input","form-control",id,value,type);
+    var label = DHElement("label","control-label col-md-2","",labelText);
+    var inputDiv = DHElement("div","col-md-10","",input.html);
+    var div = DHElement("div","form-group col-md-12","",label.html+inputDiv.html);
+    return div.html;
+}
+
+function CreateTextAreaFormControl(type, labelText, id, value) {
+    var input = DHElement("textarea","form-control",id,value);
+    var label = DHElement("label","control-label col-md-2","",labelText);
+    var inputDiv = DHElement("div","col-md-10","",input.html);
+    var div = DHElement("div","form-group col-md-12","",label.html+inputDiv.html);
+    return div.html;
+}
+
+function CreateCheckboxFormControl(id, label) {
+    var input = DHEmptyElement("input","styled","","","checkbox",["checked:checked"]);
+    var span = DHElement("span","checkbox",id,input.html);
+    var divChecker = DHElement("div","checker","",span.html,[],"top:-6px!important;");
+    var divLabel = DHElement("label","","", divChecker.html+label);
+    var divCheckBox = DHElement("div","checkbox","",divLabel.html);
+    return divCheckBox.html;
+}
+
+//Appending data to Modal form
+function AppendToModal(opt) {
+    var htmlText = DHModalForm(opt).html;
+    AbstractDHElement.prototype.appendData("body", htmlText);
+    $("#modal_large").modal("show");
+}
+
+function AppendModalDialogDelete(opts) {
+    $("#dialog").remove();
+    var htmlText = DHModalDialog({
+                                  question:"Da li si siguran da zelis da obrises "+opts.name+opts.type+"?"
+                                 }).html;
+    AbstractDHElement.prototype.appendData("body", htmlText);
+    $("#dialog").modal("show");
+    updateDeleteEvents(opts.id, opts.type, opts.onYes, opts.onNo);
+}
+
+function updateDeleteEvents(id, type, fnYes, fnNo) {
+    $("#noBtn").on("click",function(){
+        fnNo();
+    });
+    $("#yesBtn").on("click",function(){
+        fnYes(id,type);
+    });
+}
+
+function GetOptionsForSelectElement(list, params) {
+    var items = [];
+    for (var i = 0;i<list.length;i++) {
+        items.push({id:list[i][params.id],name:list[i][params.name]});
+    }
+    return items;
+}
+
+function UpdateTable(opt) {
+    AbstractDHElement.prototype.updateTable(opt);
+}
+
+function PostData(opt, fn) {
+    AbstractDHElement.prototype.postData(opt, fn);
+}
+
+function FetchData(opt, fn) {
+    AbstractDHElement.prototype.fetchData(opt, fn);
+}
