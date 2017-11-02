@@ -2,13 +2,26 @@ $(document).ready(function(){
     AbstractDHElement.prototype.addCssFiles(["bootstrap/css/bootstrap.min.css","css/style.css","css/jquery.json-view.css"]);
     AbstractDHElement.prototype.appendData("body", DHElement("button","btn","","+",["onclick:newTableRow()"]).html);
     addDataToTable();
-    updateTable();
+    
 });
 
-
 function addDataToTable() {
-    AbstractDHElement.prototype.appendData("body",MakeResponsiveDHTable(data));
-    InitDataTable("#new_table");
+    FetchData({url:"https://my-json-server.typicode.com/typicode/demo/db"},function(resp){
+        var tbl = MakeResponsiveDHTable(resp);
+        tbl.addTitle("Remove");
+        tbl.addTitle("Edit");
+        tbl.addCell("");
+        tbl.addCell("");
+        AbstractDHElement.prototype.appendData("body",tbl.html);
+        data = resp;
+        updateTable();
+        InitDataTable("#new_table");
+    },function(resp) {
+        console.log("!!!ERROR!!!");
+        console.log(resp);
+        console.log("!!!ERROR!!!");
+        console.log(data);    
+    });
 }
 
 function updateTable() {
@@ -36,12 +49,20 @@ function deleteTableRow(id) {
 function newTableRow() {
     console.log("edit");
     console.log();
-    var userIdInput = CreateInputFormControl("number", "User ID", "user_", "");
-    var idInput = CreateInputFormControl("number", "ID", "id_", "");
-    var titleInput = CreateInputFormControl("text", "Title", "title_", "");
-    var bodyInput = CreateTextAreaFormControl("textarea", "Body", "body_", "");
-    var fieldSetElement = DHElement("fieldset","content-group","",userIdInput+idInput+titleInput+bodyInput,[],"margin-top:10px;");
-    var rw = {userId:"user_",id:"id_",title:"title_",body:"body_"};   
+    
+    var formContent = "";
+    var rw ={};
+    var keys = Object.keys(data[0]);
+    for (var j=0;j<keys.length;j++) {
+        formContent += CreateInputFormControl("text",keys[j],keys[j]+"_field","");    
+        rw[keys[j]]=keys[j]+"_field";
+    }
+    //var userIdInput = CreateInputFormControl("number", "User ID", "user_", "");
+    //var idInput = CreateInputFormControl("number", "ID", "id_", "");
+    //var titleInput = CreateInputFormControl("text", "Title", "title_", "");
+    //var bodyInput = CreateTextAreaFormControl("textarea", "Body", "body_", "");
+    var fieldSetElement = DHElement("fieldset","content-group","",formContent,[],"margin-top:10px;");
+    //var rw = {userId:"user_",id:"id_",title:"title_",body:"body_"};   
     $("#modal_large").remove();
     AppendToModal({
         data:fieldSetElement.html,
@@ -53,12 +74,20 @@ function newTableRow() {
 function editTableRow(row) {
     console.log("edit");
     console.log(row);
-    var userIdInput = CreateInputFormControl("number", "User ID", "user_"+row.id, row.userId);
-    var idInput = CreateInputFormControl("number", "ID", "id_"+row.id, row.id);
-    var titleInput = CreateInputFormControl("text", "Title", "title_"+row.id, row.title);
-    var bodyInput = CreateTextAreaFormControl("textarea", "Body", "body_"+row.id, row.body);
-    var fieldSetElement = DHElement("fieldset","content-group","",userIdInput+idInput+titleInput+bodyInput,[],"margin-top:10px;");
-    var rw = {userId:"user_"+row.id,id:"id_"+row.id,title:"title_"+row.id,body:"body_"+row.id};   
+    //var userIdInput = CreateInputFormControl("number", "User ID", "user_"+row.id, row.userId);
+    //var idInput = CreateInputFormControl("number", "ID", "id_"+row.id, row.id);
+    //var titleInput = CreateInputFormControl("text", "Title", "title_"+row.id, row.title);
+    //var bodyInput = CreateTextAreaFormControl("textarea", "Body", "body_"+row.id, row.body);
+    var keys = Object.keys(data);
+    var formContent = "";
+    var rw = {};    
+    var keys = Object.keys(row);
+    for (var j=0;j<keys.length;j++) {
+        formContent += CreateInputFormControl("text",keys[j],keys[j]+"_field",row[keys[j]]);    
+        rw[keys[j]]=keys[j]+"_field";
+    }
+    var fieldSetElement = DHElement("fieldset","content-group","",formContent,[],"margin-top:10px;");
+    //var rw = {userId:"user_"+row.id,id:"id_"+row.id,title:"title_"+row.id,body:"body_"+row.id};   
     $("#modal_large").remove();
     AppendToModal({
         data:fieldSetElement.html,
@@ -70,16 +99,36 @@ function editTableRow(row) {
 function addTableRow(opt) {
     $("#modal_large").modal("toggle");
     console.log(opt);
-    var row = {};
+    var user = {};
     for (var i = 0;i<Object.keys(opt).length;i++) {
-        row[Object.keys(opt)[i]] = $("#"+opt[Object.keys(opt)[i]]).val(); 
+        user[Object.keys(opt)[i]] = $("#"+opt[Object.keys(opt)[i]]).val(); 
     }
-    data.push(row);
-    updateTable();
+    
+    PostData({
+        url:"https://jsonplaceholder.typicode.com/posts",
+        data:JSON.stringify(user)
+    },function(response){
+        data=response;
+        updateTable();        
+    });
+    
 }
+
 function updateTableRow(opt) {
     $("#modal_large").modal("toggle");
     console.log(opt);
+    var user = {};
+    for (var i = 0;i<Object.keys(opt).length;i++) {
+        user[Object.keys(opt)[i]] = $("#"+opt[Object.keys(opt)[i]]).val(); 
+    }
+    
+    PutData({
+        url:"https://jsonplaceholder.typicode.com/posts/"+user.id,
+        data:JSON.stringify(user)
+    },function(response){
+        data=response;
+        updateTable();        
+    });
 }
 var data = [
   {

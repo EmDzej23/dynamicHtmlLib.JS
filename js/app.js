@@ -74,7 +74,7 @@ function prepareForWriting(data) {
 }
 function writeText(data) {
     $("#fifth_2").children().remove();
-    AbstractDHElement.prototype.appendData("#fifth_2",MakeResponsiveDHTable(data));
+    AbstractDHElement.prototype.appendData("#fifth_2",MakeResponsiveDHTable(data).html);
     //outerTable = InitDataTable("#new_table");
     InitDataTable("#new_table");
     //allInnerTables = InitAllDataTables();

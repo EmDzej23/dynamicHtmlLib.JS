@@ -63,14 +63,19 @@ AbstractDHElement.prototype.addPageTitle = function (title) {
     AbstractDHElement.prototype.appendData("head", DHElement("title","","",title,[]).html);
 };
 
-AbstractDHElement.prototype.postData = function(options, onSuccess) {
+AbstractDHElement.prototype.postData = function(options, onSuccess, onError) {
     var d = AbstractDHElement.prototype.ajax("POST",options.url,"json","application/json","","",options.data);
-    d.executeAjax(onSuccess);
+    d.executeAjax(onSuccess, onError);
 };
 
-AbstractDHElement.prototype.fetchData = function(options, onSuccess) {
+AbstractDHElement.prototype.putData = function(options, onSuccess, onError) {
+    var d = AbstractDHElement.prototype.ajax("PUT",options.url,"json","application/json","","",options.data);
+    d.executeAjax(onSuccess, onError);
+};
+
+AbstractDHElement.prototype.fetchData = function(options, onSuccess, onError) {
     var d = AbstractDHElement.prototype.ajax("GET",options.url,"json","application/json","","","");
-    d.executeAjax(onSuccess);
+    d.executeAjax(onSuccess, onError);
 };
 
 AbstractDHElement.prototype.updateTable = function(options) {
@@ -87,8 +92,9 @@ AbstractDHElement.prototype.ajax = function (type, url, dataType, contentType, o
     this.onComplente = onComplete;
     this.data = data;
      
-    this.executeAjax = function(afterDataReceived) {
+    this.executeAjax = function(afterDataReceived, onError) {
         $.ajax({
+            crossOrigin: true,
             type : this.type,
             url : this.url,
             dataType: this.dataType,
@@ -99,6 +105,15 @@ AbstractDHElement.prototype.ajax = function (type, url, dataType, contentType, o
             },
             complete: function (response) {
                 //test(response);      
+            },
+            error: function(response) {
+                if (onError===undefined) {
+                    alert("Problem sa komunikacijom. Azurirajte stranicu.");
+                    console.log(response);
+                }
+                else {
+                    onError(response);
+                }        
             }
         });
     };
@@ -282,6 +297,16 @@ function DHTable(classes, id, titles, rows, json, styles) {
     this.bodyRows = this.getBodyRows();
     this.headerRow = this.getHeaderRows();
     this.html = this.getComponent();
+    this.addTitle = function(title) {
+        this.titles.push(title);    
+        this.html = this.getComponent();
+    }
+    this.addCell = function(cell) {
+        for (var i = 0;i<this.rows.length;i++) {
+            this.rows[i].push(cell);       
+        }    
+        this.html = this.getComponent();
+    }
     this.refreshTableBody = function(container) {
         AbstractDHElement.prototype.removeChildrenData.call(this, container+" tbody");
         AbstractDHElement.prototype.appendData.call(this,container+" tbody", this.bodyRows);
@@ -331,7 +356,7 @@ function collapseTable(cell_id, btn_id) {
 
 function MakeResponsiveDHTable(data) {
     var table = DHTable("table table-responsive root-table","new_table",[],[],data);
-    return table.html;
+    return table;
 }
 var outerTable;
 var allInnerTableIds=[];
@@ -534,10 +559,14 @@ function UpdateTable(opt) {
     AbstractDHElement.prototype.updateTable(opt);
 }
 
-function PostData(opt, fn) {
-    AbstractDHElement.prototype.postData(opt, fn);
+function PostData(opt, fn, onError) {
+    AbstractDHElement.prototype.postData(opt, fn, onError);
 }
 
-function FetchData(opt, fn) {
-    AbstractDHElement.prototype.fetchData(opt, fn);
+function PutData(opt, fn, onError) {
+    AbstractDHElement.prototype.putData(opt, fn, onError);
+}
+
+function FetchData(opt, fn, onError) {
+    AbstractDHElement.prototype.fetchData(opt, fn, onError);
 }
