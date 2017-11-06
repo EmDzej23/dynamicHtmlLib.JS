@@ -6,7 +6,7 @@ $(document).ready(function(){
 });
 
 function addDataToTable() {
-    FetchData({url:"https://my-json-server.typicode.com/typicode/demo/db"},function(resp){
+    FetchData({url:CRUD_URL},function(resp){
         var tbl = MakeResponsiveDHTable(resp);
         tbl.addTitle("Remove");
         tbl.addTitle("Edit");
@@ -105,7 +105,7 @@ function addTableRow(opt) {
     }
     
     PostData({
-        url:"https://jsonplaceholder.typicode.com/posts",
+        url:CRUD_URL,
         data:JSON.stringify(user)
     },function(response){
         data=response;
@@ -123,7 +123,7 @@ function updateTableRow(opt) {
     }
     
     PutData({
-        url:"https://jsonplaceholder.typicode.com/posts/"+user.id,
+        url:CRUD_URL+user.id,
         data:JSON.stringify(user)
     },function(response){
         data=response;

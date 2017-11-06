@@ -94,7 +94,7 @@ AbstractDHElement.prototype.ajax = function (type, url, dataType, contentType, o
      
     this.executeAjax = function(afterDataReceived, onError) {
         $.ajax({
-            crossOrigin: true,
+            //crossOrigin: true,
             type : this.type,
             url : this.url,
             dataType: this.dataType,

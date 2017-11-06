@@ -21,6 +21,7 @@ $(document).ready(function(){
             type:"text",
             label:"Druga tekst labela",
             value:"Druga tekst vrednost",
+            id:"labela2"
         },
         {
             type:"number",
@@ -100,5 +101,45 @@ function prettyPrint(data) {
     $('#json_tree').jsonView(JSON.stringify(players));
 }
 function demo() {
-    console.log("testing...");
+    console.log("======Polja sa dijaloga======");
+    console.log("Labela 1:"+$("#labela1").val());
+    console.log("Labela 2:"+$("#labela2").val());
+    console.log("Labela 3:"+$("#labela3").val());
+    console.log("Labela CB:"+$("#labela_cbox").prop("checked"));
+    console.log("Labela Date:"+$("#labela_date").val());
+    console.log("Labela Demo:"+$("#labela_demo").val());
+    console.log("Dropdown option selected:"+$("#selectId option:selected").text());
+    console.log("======Polja sa dijaloga======");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
