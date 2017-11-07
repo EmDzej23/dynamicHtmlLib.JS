@@ -403,6 +403,7 @@ function DHModalForm (options) {
     this.title = options.title===undefined?"":options.title;
     this.buttonLabel = options.buttonLabel===undefined?"":options.buttonLabel;
     this.method = options.method===undefined?"":options.method;
+    this.icon = options.icon===undefined?"":options.icon;
     this.createDataDynamically = function () {
         if (Object.prototype.toString.call(this.options.data)==="[object String]") return this.options.data;
         var htmlText="";
@@ -444,12 +445,11 @@ function DHModalForm (options) {
                 .child(DHElement("div","col-md-12 col-lg-12 col-sm-12 col-xs-12","","")
                 .child(DHElement("div","panel panel-flat","","",[],"max-height: 350px; overflow: auto;")
                 .child(DHElement("div","panel-body","","",[],"overflow-y: auto; max-height: 250px;")
-                .child(DHElement("div","form-group","",this.data))))))
+                .child(DHElement("div","form-group","",DHElement("div",this.icon,"","",[],"font-size:50px;display:inline;position: absolute;").html+this.data))))))
                 .child(DHElement("div","modal-body","","")
                 .child(DHElement("div","row","","")
                 .child(DHElement("div","col-md-12 col-lg-12 col-sm-12 col-xs-12","","")
-                .child(DHElement("button","btn bg-teal-400","",this.buttonLabel,["onclick:"+this.method]))
-                .child(DHElement("button","btn btn-link","","Close",["data-dismiss:modal"]))))))));
+                .child(DHElement("button","btn bg-teal-400","",this.buttonLabel,["data-dismiss:modal"]))))))));
         var htmlText = DHElement(d.tag, d.classes, d.id, d.getComponentsTree(d), d.optionalAttributes, d.styles).html;
         return htmlText;
     };
@@ -478,14 +478,16 @@ function DHModalDialog (options) {
     this.html = this.getComponent();
 }
 
-function AppendInfoModal(title, text){ 
+function AppendInfoModal(title, text, icon){
+    $("#modal_large").remove();
+    var iconClass=""; 
+    if (icon === "warn") iconClass = " glyphicon glyphicon-warning-sign";
+    if (icon === "info") iconClass = " glyphicon glyphicon-info-sign"; 
+    if (icon === "ok") iconClass = " glyphicon glyphicon-ok-sign";
     var demoModal = DHModalForm({
         title:title,
         buttonLabel:"OK",
-        method:function(){
-           $("#modal_large").modal("toggle");
-           $("#modal_large").remove();        
-        },
+        icon:iconClass,
         data: CreateLabel(text)
     });
     AbstractDHElement.prototype.appendData("body", demoModal.html);
@@ -527,7 +529,7 @@ function CreateTextAreaFormControl(type, labelText, id, value) {
 }
 
 function CreateLabel(labelText) {
-    var label = DHElement("label","control-label col-md-12","",labelText);
+    var label = DHElement("label","control-label col-md-8 col-md-offset-2","",labelText);
     return label.html;
 }
 
