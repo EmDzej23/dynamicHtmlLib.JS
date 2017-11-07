@@ -437,7 +437,7 @@ function DHModalForm (options) {
                 .child(DHElement("div","modal-dialog","","")
                 .child(DHElement("div","modal-content","","")
                 .child(DHElement("div","modal-header bg-teal-400","","")
-                .child(DHElement("h2","panel-title","",this.title))
+                .child(DHElement("h2","panel-title","",this.title,[],"display:inline"))
                 .child(DHElement("button","close","","x",["data-dismiss:modal"])))
                 .child(DHElement("div","modal-body","","")
                 .child(DHElement("div","row","","")
@@ -478,6 +478,20 @@ function DHModalDialog (options) {
     this.html = this.getComponent();
 }
 
+function AppendInfoModal(title, text){ 
+    var demoModal = DHModalForm({
+        title:title,
+        buttonLabel:"OK",
+        method:function(){
+           $("#modal_large").modal("toggle");
+           $("#modal_large").remove();        
+        },
+        data: CreateLabel(text)
+    });
+    AbstractDHElement.prototype.appendData("body", demoModal.html);
+    $("#modal_large").modal("show");
+}
+
 function CreateTableBtn(method, type) {
     var t = type==="edit"?"list":"remove";
     return DHElement("button","btn btn-rounded","",
@@ -510,6 +524,11 @@ function CreateTextAreaFormControl(type, labelText, id, value) {
     var inputDiv = DHElement("div","col-md-10","",input.html);
     var div = DHElement("div","form-group col-md-12","",label.html+inputDiv.html);
     return div.html;
+}
+
+function CreateLabel(labelText) {
+    var label = DHElement("label","control-label col-md-12","",labelText);
+    return label.html;
 }
 
 function CreateCheckboxFormControl(id, label) {

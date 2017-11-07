@@ -16,6 +16,8 @@ $(document).ready(function(){
     DHTable("table table-responsive","my_table",["Firstname","Lastname","Email"],[["Marko","Jereminov","PP@example.com"],["Pavle","Jovanovic","pj@example.com"],["Jovan","Djokovic","dj@example.com"]]).appendTo("#second");
     DHElement("p","","",'HOW TO: DHList("","",["","active",""],["Prvi2","Drugi2","Treci2"],"",[]).appendTo("#third");').appendTo("#third");    
     DHList("list-group","",["list-group-item trans","list-group-item active","list-group-item trans"],["Prvi2","Drugi2","Treci2"],"",[]).appendTo("#third");
-    
+    AppendInfoModal("GRESKA", "Text body-a");
     
 });
+
+
